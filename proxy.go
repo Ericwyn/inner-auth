@@ -85,6 +85,10 @@ func (rp *ReverseProxy) serveWebSocket(w http.ResponseWriter, r *http.Request) {
 	outReq.Host = rp.target.Host
 	outReq.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
 	outReq.Header.Set("X-Forwarded-Proto", "http")
+	// 修改 Origin header 以匹配上游服务
+	if origin := outReq.Header.Get("Origin"); origin != "" {
+		outReq.Header.Set("Origin", rp.target.Scheme+"://"+rp.target.Host)
+	}
 
 	// 将请求写入上游连接
 	if err := outReq.Write(backendConn); err != nil {
