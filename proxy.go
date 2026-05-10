@@ -11,8 +11,8 @@ import (
 )
 
 type ReverseProxy struct {
-	target  *url.URL
-	proxy   *httputil.ReverseProxy
+	target *url.URL
+	proxy  *httputil.ReverseProxy
 }
 
 func NewReverseProxy(upstream string) (*ReverseProxy, error) {
@@ -30,6 +30,9 @@ func NewReverseProxy(upstream string) (*ReverseProxy, error) {
 		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
 		req.Header.Set("X-Forwarded-Proto", "http")
 	}
+
+	// 保留所有 header，不删除 hop-by-hop header
+	proxy.FlushInterval = -1
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Printf("proxy error: %v", err)
