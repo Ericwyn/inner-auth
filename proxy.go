@@ -19,6 +19,8 @@ func NewReverseProxy(upstream string) (*httputil.ReverseProxy, error) {
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
 		req.Host = target.Host
+		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+		req.Header.Set("X-Forwarded-Proto", "http")
 	}
 
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
