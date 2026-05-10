@@ -13,6 +13,7 @@ const version = "0.0.1"
 
 func main() {
 	showVersion := flag.Bool("v", false, "print version")
+	showTOTP := flag.Bool("show-totp", false, "show TOTP import URI")
 	configPath := flag.String("c", "config.json", "config file path")
 	flag.Parse()
 
@@ -25,6 +26,16 @@ func main() {
 	config, err := LoadConfig(*configPath)
 	if err != nil {
 		log.Fatalf("load config: %v", err)
+	}
+
+	if *showTOTP {
+		if config.Auth.TOTPToken == "" {
+			log.Fatal("totp_token is not configured")
+		}
+		uri := fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
+			config.Title, config.Auth.User, config.Auth.TOTPToken, config.Title)
+		fmt.Println(uri)
+		return
 	}
 
 	// 初始化组件
