@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ .Lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -125,26 +125,26 @@
         <h1 class="login-title">{{ .Title }}</h1>
         <form method="POST" action="/login">
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">{{ .I18n.LabelUsername }}</label>
                 <input type="text"
                        name="username"
                        id="username"
                        autocomplete="username"
-                       placeholder="Enter your username"
+                       placeholder="{{ .I18n.PlaceholderUsername }}"
                        required />
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">{{ .I18n.LabelPassword }}</label>
                 <input type="password"
                        name="password"
                        id="password"
                        autocomplete="current-password"
-                       placeholder="Enter your password"
+                       placeholder="{{ .I18n.PlaceholderPassword }}"
                        required />
             </div>
             {{ if .TOTPRequired }}
             <div class="form-group">
-                <label for="totp">TOTP Code</label>
+                <label for="totp">{{ .I18n.LabelTOTP }}</label>
                 <input type="text"
                        name="totp"
                        id="totp"
@@ -152,10 +152,10 @@
                        inputmode="numeric"
                        pattern="[0-9]*"
                        maxlength="6"
-                       placeholder="Enter 6-digit code" />
+                       placeholder="{{ .I18n.PlaceholderTOTP }}" />
             </div>
             {{ end }}
-            <button type="submit" class="submit-btn">Login</button>
+            <button type="submit" class="submit-btn">{{ .I18n.BtnLogin }}</button>
         </form>
         {{ if .Error }}
         <div class="error-message">{{ .Error }}</div>

@@ -25,19 +25,26 @@ type LoginPageData struct {
 	Title        string
 	TOTPRequired bool
 	Error        string
+	Lang         string
+	I18n         I18n
 }
 
 func (h *Handler) ShowLogin(c *gin.Context) {
+	lang := detectLanguage(c.GetHeader("Accept-Language"))
 	data := LoginPageData{
 		Title:        h.config.Title,
 		TOTPRequired: h.auth.IsTOTPRequired(),
 		Error:        c.Query("error"),
+		Lang:         lang,
+		I18n:         GetI18n(lang),
 	}
 	c.HTML(http.StatusOK, "login.html", data)
 }
 
 func (h *Handler) HandleLogin(c *gin.Context) {
 	ip := c.ClientIP()
+	lang := detectLanguage(c.GetHeader("Accept-Language"))
+	i18n := GetI18n(lang)
 
 	// 检查速率限制
 	result := h.rateLimiter.Check(ip)
@@ -46,7 +53,9 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 		c.HTML(http.StatusTooManyRequests, "login.html", LoginPageData{
 			Title:        h.config.Title,
 			TOTPRequired: h.auth.IsTOTPRequired(),
-			Error:        result.Message,
+			Error:        i18n.ErrRateLimit,
+			Lang:         lang,
+			I18n:         i18n,
 		})
 		return
 	}
@@ -63,7 +72,9 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 		c.HTML(http.StatusUnauthorized, "login.html", LoginPageData{
 			Title:        h.config.Title,
 			TOTPRequired: h.auth.IsTOTPRequired(),
-			Error:        "Invalid username or password",
+			Error:        i18n.ErrInvalid,
+			Lang:         lang,
+			I18n:         i18n,
 		})
 		return
 	}
@@ -78,7 +89,9 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "login.html", LoginPageData{
 			Title:        h.config.Title,
 			TOTPRequired: h.auth.IsTOTPRequired(),
-			Error:        "Internal server error",
+			Error:        i18n.ErrInternal,
+			Lang:         lang,
+			I18n:         i18n,
 		})
 		return
 	}
