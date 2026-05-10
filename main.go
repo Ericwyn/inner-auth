@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const version = "0.0.2"
+var version = "0.0.2"
 
 func main() {
 	showVersion := flag.Bool("v", false, "print version")
