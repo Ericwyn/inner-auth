@@ -102,6 +102,19 @@
             opacity: 0.8;
         }
 
+        .logout-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .logout-link:hover {
+            color: var(--text);
+        }
+
         .error-message {
             margin-top: 20px;
             padding: 12px;
@@ -157,6 +170,9 @@
             {{ end }}
             <button type="submit" class="submit-btn">{{ .I18n.BtnLogin }}</button>
         </form>
+        {{ if .LoggedIn }}
+        <a href="/logout" class="logout-link">{{ .I18n.BtnLogout }}</a>
+        {{ end }}
         {{ if .Error }}
         <div class="error-message">{{ .Error }}</div>
         {{ end }}

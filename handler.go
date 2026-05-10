@@ -27,16 +27,27 @@ type LoginPageData struct {
 	Error        string
 	Lang         string
 	I18n         I18n
+	LoggedIn     bool
 }
 
 func (h *Handler) ShowLogin(c *gin.Context) {
 	lang := detectLanguage(c.GetHeader("Accept-Language"))
+	
+	// 检查是否已登录
+	loggedIn := false
+	token, _ := c.Cookie(CookieName)
+	if token != "" {
+		_, err := ValidateToken(h.config.JWTSecret, token)
+		loggedIn = err == nil
+	}
+	
 	data := LoginPageData{
 		Title:        h.config.Title,
 		TOTPRequired: h.auth.IsTOTPRequired(),
 		Error:        c.Query("error"),
 		Lang:         lang,
 		I18n:         GetI18n(lang),
+		LoggedIn:     loggedIn,
 	}
 	c.HTML(http.StatusOK, "login.html", data)
 }

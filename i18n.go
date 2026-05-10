@@ -12,6 +12,7 @@ type I18n struct {
 	PlaceholderPassword string
 	PlaceholderTOTP   string
 	BtnLogin          string
+	BtnLogout         string
 	ErrInvalid        string
 	ErrTOTPRequired   string
 	ErrRateLimit      string
@@ -28,6 +29,7 @@ var i18nMap = map[string]I18n{
 		PlaceholderPassword:  "请输入密码",
 		PlaceholderTOTP:      "请输入 6 位验证码",
 		BtnLogin:             "登录",
+		BtnLogout:            "退出登录",
 		ErrInvalid:           "用户名或密码错误",
 		ErrTOTPRequired:      "请输入验证码",
 		ErrRateLimit:         "尝试次数过多，请稍后再试",
@@ -42,6 +44,7 @@ var i18nMap = map[string]I18n{
 		PlaceholderPassword:  "Enter your password",
 		PlaceholderTOTP:      "Enter 6-digit code",
 		BtnLogin:             "Login",
+		BtnLogout:            "Logout",
 		ErrInvalid:           "Invalid username or password",
 		ErrTOTPRequired:      "TOTP code is required",
 		ErrRateLimit:         "Too many attempts, please try again later",
