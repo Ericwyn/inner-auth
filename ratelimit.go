@@ -12,12 +12,12 @@ type IPRecord struct {
 }
 
 type RateLimiter struct {
-	mu              sync.RWMutex
-	config          *RateLimitConfig
-	ipRecords       map[string]*IPRecord
-	globalAttempts  int
+	mu                sync.RWMutex
+	config            *RateLimitConfig
+	ipRecords         map[string]*IPRecord
+	globalAttempts    int
 	globalWindowStart time.Time
-	globalLocked    bool
+	globalLocked      bool
 	globalLockedUntil time.Time
 }
 
@@ -30,15 +30,15 @@ func NewRateLimiter(config *RateLimitConfig) *RateLimiter {
 }
 
 type RateLimitResult struct {
-	Allowed   bool
-	Locked    bool
+	Allowed    bool
+	Locked     bool
 	RetryAfter time.Duration
-	Message   string
+	Message    string
 }
 
 func (rl *RateLimiter) Check(ip string) RateLimitResult {
-	rl.mu.RLock()
-	defer rl.mu.RUnlock()
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
 
 	// 检查全局限制
 	if rl.globalLocked {

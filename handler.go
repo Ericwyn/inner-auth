@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +38,7 @@ func (h *Handler) ShowLogin(c *gin.Context) {
 	loggedIn := false
 	token, _ := c.Cookie(CookieName)
 	if token != "" {
-		_, err := ValidateToken(site.Config.JWTSecret, token)
+		_, err := ValidateToken(site.Config.JWTSecret, token, site.Config.ListenHost)
 		loggedIn = err == nil
 	}
 
@@ -100,7 +102,7 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 	site.RateLimiter.RecordSuccess(ip)
 
 	// 生成 JWT（使用该站点的 jwt_secret）
-	token, err := GenerateToken(site.Config.JWTSecret, username, site.Config.SessionTTLHours)
+	token, err := GenerateToken(site.Config.JWTSecret, username, site.Config.ListenHost, site.Config.SessionTTLHours)
 	if err != nil {
 		log.Printf("generate token error: %v", err)
 		c.HTML(http.StatusInternalServerError, "login.html", LoginPageData{
@@ -114,25 +116,49 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 	}
 
 	// 设置 Cookie
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		CookieName,
 		token,
 		site.Config.SessionTTLHours*3600,
 		"/",
 		"",
-		false, // secure, 生产环境应设为 true
-		true,  // httpOnly
+		isSecureCookie(site),
+		true, // httpOnly
 	)
 
 	// 重定向到原始请求路径或首页
-	redirectTo := c.Query("redirect")
-	if redirectTo == "" {
-		redirectTo = "/"
-	}
+	redirectTo := safeRedirectPath(c.Query("redirect"))
 	c.Redirect(http.StatusFound, redirectTo)
 }
 
 func (h *Handler) HandleLogout(c *gin.Context) {
-	c.SetCookie(CookieName, "", -1, "/", "", false, true)
+	site := GetSiteByHost(c.Request.Host)
+	secure := true
+	if site != nil {
+		secure = isSecureCookie(site)
+	}
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(CookieName, "", -1, "/", "", secure, true)
 	c.Redirect(http.StatusFound, "/inner-login")
+}
+
+func isSecureCookie(site *Site) bool {
+	if site.Config.CookieSecure == nil {
+		return true
+	}
+	return *site.Config.CookieSecure
+}
+
+func safeRedirectPath(raw string) string {
+	if raw == "" || strings.HasPrefix(raw, "//") || strings.Contains(raw, "\\") {
+		return "/"
+	}
+
+	redirectURL, err := url.Parse(raw)
+	if err != nil || redirectURL.IsAbs() || redirectURL.Host != "" || !strings.HasPrefix(redirectURL.Path, "/") {
+		return "/"
+	}
+
+	return redirectURL.RequestURI()
 }

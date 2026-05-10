@@ -17,6 +17,7 @@ type SiteConfig struct {
 	Title           string          `json:"title"`
 	JWTSecret       string          `json:"jwt_secret"`
 	SessionTTLHours int             `json:"session_ttl_hours"`
+	CookieSecure    *bool           `json:"cookie_secure"`
 	RateLimit       RateLimitConfig `json:"rate_limit"`
 	Auth            AuthConfig      `json:"auth"`
 }
@@ -30,9 +31,10 @@ type RateLimitConfig struct {
 }
 
 type AuthConfig struct {
-	User      string `json:"user"`
-	Password  string `json:"password"`
-	TOTPToken string `json:"totp_token"`
+	User         string `json:"user"`
+	Password     string `json:"password"`
+	PasswordHash string `json:"password_hash"`
+	TOTPToken    string `json:"totp_token"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -70,8 +72,8 @@ func LoadConfig(path string) (*Config, error) {
 		if site.Auth.User == "" {
 			return nil, fmt.Errorf("site %s: auth.user is required", name)
 		}
-		if site.Auth.Password == "" {
-			return nil, fmt.Errorf("site %s: auth.password is required", name)
+		if site.Auth.Password == "" && site.Auth.PasswordHash == "" {
+			return nil, fmt.Errorf("site %s: auth.password or auth.password_hash is required", name)
 		}
 
 		// 设置站点默认值

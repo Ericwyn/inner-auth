@@ -7,6 +7,7 @@
       "title": "OpenCode",
       "jwt_secret": "your_jwt_secret",
       "session_ttl_hours": 168,
+      "cookie_secure": true,
       "rate_limit": {
         "max_attempts_per_ip": 5,
         "ip_window_seconds": 60,
@@ -17,6 +18,7 @@
       "auth": {
         "user": "your_username",
         "password": "your_password",
+        "password_hash": "",
         "totp_token": ""
       }
     }

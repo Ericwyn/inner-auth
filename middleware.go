@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,17 +20,17 @@ func AuthMiddleware() gin.HandlerFunc {
 		token, err := c.Cookie(CookieName)
 		if err != nil || token == "" {
 			// 无 token，重定向到登录页
-			redirectTo := c.Request.URL.Path
+			redirectTo := url.QueryEscape(c.Request.URL.RequestURI())
 			c.Redirect(http.StatusFound, "/inner-login?redirect="+redirectTo)
 			c.Abort()
 			return
 		}
 
 		// 验证 token（使用该站点的 jwt_secret）
-		claims, err := ValidateToken(site.Config.JWTSecret, token)
+		claims, err := ValidateToken(site.Config.JWTSecret, token, site.Config.ListenHost)
 		if err != nil {
 			// token 无效，重定向到登录页
-			redirectTo := c.Request.URL.Path
+			redirectTo := url.QueryEscape(c.Request.URL.RequestURI())
 			c.Redirect(http.StatusFound, "/inner-login?redirect="+redirectTo)
 			c.Abort()
 			return

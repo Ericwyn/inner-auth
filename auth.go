@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"time"
 
 	"github.com/pquerna/otp/totp"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Authenticator struct {
@@ -20,7 +22,7 @@ func (a *Authenticator) IsTOTPRequired() bool {
 }
 
 func (a *Authenticator) Authenticate(username, password, totpCode string) error {
-	if username != a.config.User || password != a.config.Password {
+	if username != a.config.User || !a.validPassword(password) {
 		return fmt.Errorf("invalid username or password")
 	}
 
@@ -40,4 +42,12 @@ func (a *Authenticator) Authenticate(username, password, totpCode string) error 
 	}
 
 	return nil
+}
+
+func (a *Authenticator) validPassword(password string) bool {
+	if a.config.PasswordHash != "" {
+		return bcrypt.CompareHashAndPassword([]byte(a.config.PasswordHash), []byte(password)) == nil
+	}
+
+	return subtle.ConstantTimeCompare([]byte(password), []byte(a.config.Password)) == 1
 }

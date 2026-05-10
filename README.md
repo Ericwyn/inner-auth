@@ -51,6 +51,7 @@ go build -o inner-auth
       "title": "OpenCode",
       "jwt_secret": "your_jwt_secret",
       "session_ttl_hours": 168,
+      "cookie_secure": true,
       "rate_limit": {
         "max_attempts_per_ip": 5,
         "ip_window_seconds": 60,
@@ -61,6 +62,7 @@ go build -o inner-auth
       "auth": {
         "user": "your_username",
         "password": "your_password",
+        "password_hash": "",
         "totp_token": ""
       }
     }
@@ -86,6 +88,7 @@ go build -o inner-auth
 | `title` | string | Login | 登录页面标题 |
 | `jwt_secret` | string | - | JWT 签名密钥（必填） |
 | `session_ttl_hours` | int | 168 | 会话时长（小时），默认 7 天 |
+| `cookie_secure` | bool | true | Cookie 是否仅通过 HTTPS 发送，生产环境应保持 true |
 | `rate_limit` | object | - | 速率限制配置 |
 | `auth` | object | - | 认证信息（必填） |
 
@@ -104,7 +107,8 @@ go build -o inner-auth
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `user` | string | 用户名（必填） |
-| `password` | string | 密码（必填） |
+| `password` | string | 明文密码，与 `password_hash` 二选一 |
+| `password_hash` | string | bcrypt 密码哈希，配置后优先使用 |
 | `totp_token` | string | TOTP 密钥（base32 编码），为空时跳过 TOTP 验证 |
 
 ## 部署架构
@@ -149,7 +153,7 @@ test.domain.com {
 ## 安全特性
 
 - **站点隔离**：每个站点独立的 rate limiter、authenticator、JWT secret
-- **Cookie 安全**：HttpOnly，防止 XSS 攻击
+- **Cookie 安全**：HttpOnly、Secure、SameSite=Lax，降低 XSS 和 CSRF 风险
 - **速率限制**：IP 级别（5次/分钟）+ 全局级别（200次/小时）
 - **JWT 过期**：默认 7 天自动过期
 - **TOTP**：SHA1 算法，6 位验证码，30 秒周期，±30 秒容错
