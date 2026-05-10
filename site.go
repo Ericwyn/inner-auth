@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http/httputil"
 	"strings"
 	"time"
 )
@@ -11,7 +10,7 @@ type Site struct {
 	Config      *SiteConfig
 	Auth        *Authenticator
 	RateLimiter *RateLimiter
-	Proxy       *httputil.ReverseProxy
+	Proxy       *ReverseProxy
 }
 
 var sitesByHost map[string]*Site
