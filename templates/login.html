@@ -136,7 +136,7 @@
 <body>
     <div class="login-card">
         <h1 class="login-title">{{ .Title }}</h1>
-        <form method="POST" action="/login">
+        <form method="POST" action="/inner-login">
             <div class="form-group">
                 <label for="username">{{ .I18n.LabelUsername }}</label>
                 <input type="text"
@@ -171,7 +171,7 @@
             <button type="submit" class="submit-btn">{{ .I18n.BtnLogin }}</button>
         </form>
         {{ if .LoggedIn }}
-        <a href="/logout" class="logout-link">{{ .I18n.BtnLogout }}</a>
+        <a href="/inner-logout" class="logout-link">{{ .I18n.BtnLogout }}</a>
         {{ end }}
         {{ if .Error }}
         <div class="error-message">{{ .Error }}</div>

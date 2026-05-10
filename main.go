@@ -64,9 +64,9 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	// 静态路由
-	r.GET("/login", handler.ShowLogin)
-	r.POST("/login", handler.HandleLogin)
-	r.GET("/logout", handler.HandleLogout)
+	r.GET("/inner-login", handler.ShowLogin)
+	r.POST("/inner-login", handler.HandleLogin)
+	r.GET("/inner-logout", handler.HandleLogout)
 
 	// 其他路由需要认证
 	r.NoRoute(AuthMiddleware(config.JWTSecret), func(c *gin.Context) {

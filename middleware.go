@@ -13,7 +13,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		if err != nil || token == "" {
 			// 无 token，重定向到登录页
 			redirectTo := c.Request.URL.Path
-			c.Redirect(http.StatusFound, "/login?redirect="+redirectTo)
+			c.Redirect(http.StatusFound, "/inner-login?redirect="+redirectTo)
 			c.Abort()
 			return
 		}
@@ -23,7 +23,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		if err != nil {
 			// token 无效，重定向到登录页
 			redirectTo := c.Request.URL.Path
-			c.Redirect(http.StatusFound, "/login?redirect="+redirectTo)
+			c.Redirect(http.StatusFound, "/inner-login?redirect="+redirectTo)
 			c.Abort()
 			return
 		}

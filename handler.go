@@ -128,5 +128,5 @@ func (h *Handler) HandleLogin(c *gin.Context) {
 
 func (h *Handler) HandleLogout(c *gin.Context) {
 	c.SetCookie(CookieName, "", -1, "/", "", false, true)
-	c.Redirect(http.StatusFound, "/login")
+	c.Redirect(http.StatusFound, "/inner-login")
 }
