@@ -1,0 +1,72 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+const version = "0.0.1"
+
+func main() {
+	showVersion := flag.Bool("v", false, "print version")
+	configPath := flag.String("c", "config.json", "config file path")
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("inner-auth %s\n", version)
+		return
+	}
+
+	// 加载配置
+	config, err := LoadConfig(*configPath)
+	if err != nil {
+		log.Fatalf("load config: %v", err)
+	}
+
+	// 初始化组件
+	auth := NewAuthenticator(&config.Auth)
+	rateLimiter := NewRateLimiter(&config.RateLimit)
+	handler := NewHandler(config, auth, rateLimiter)
+
+	// 创建反向代理
+	proxy, err := NewReverseProxy(config.Upstream)
+	if err != nil {
+		log.Fatalf("create proxy: %v", err)
+	}
+
+	// 启动定时清理速率限制记录
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			rateLimiter.Cleanup()
+		}
+	}()
+
+	// 设置 Gin
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+
+	// 静态路由
+	r.GET("/login", handler.ShowLogin)
+	r.POST("/login", handler.HandleLogin)
+	r.GET("/logout", handler.HandleLogout)
+
+	// 其他路由需要认证
+	r.NoRoute(AuthMiddleware(config.JWTSecret), func(c *gin.Context) {
+		proxy.ServeHTTP(c.Writer, c.Request)
+	})
+
+	// 启动服务
+	addr := fmt.Sprintf(":%d", config.ListenPort)
+	log.Printf("inner-auth starting on %s", addr)
+	log.Printf("upstream: %s", config.Upstream)
+	if err := r.Run(addr); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
+}

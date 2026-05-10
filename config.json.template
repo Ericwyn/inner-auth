@@ -1,0 +1,19 @@
+{
+  "listen_port": 6904,
+  "upstream": "http://127.0.0.1:4096",
+  "title": "My Service Login",
+  "jwt_secret": "change-this-to-a-random-secret-key",
+  "session_ttl_hours": 168,
+  "rate_limit": {
+    "max_attempts_per_ip": 5,
+    "ip_window_seconds": 60,
+    "ip_lockout_seconds": 300,
+    "global_max_attempts": 200,
+    "global_window_seconds": 3600
+  },
+  "auth": {
+    "user": "your_username",
+    "password": "your_password",
+    "totp_token": ""
+  }
+}
