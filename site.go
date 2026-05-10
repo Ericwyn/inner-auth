@@ -43,11 +43,20 @@ func InitSites(config *Config) error {
 }
 
 func GetSiteByHost(host string) *Site {
-	// 移除端口号
-	if idx := strings.LastIndex(host, ":"); idx != -1 {
-		host = host[:idx]
+	// 先尝试完整匹配（包含端口）
+	if site, ok := sitesByHost[host]; ok {
+		return site
 	}
-	return sitesByHost[host]
+
+	// 再尝试只匹配 host 部分（不含端口）
+	if idx := strings.LastIndex(host, ":"); idx != -1 {
+		hostWithoutPort := host[:idx]
+		if site, ok := sitesByHost[hostWithoutPort]; ok {
+			return site
+		}
+	}
+
+	return nil
 }
 
 func CleanupAllRateLimiters() {
