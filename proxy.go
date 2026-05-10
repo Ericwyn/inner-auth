@@ -29,6 +29,10 @@ func NewReverseProxy(upstream string) (*ReverseProxy, error) {
 		req.Host = target.Host
 		req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
 		req.Header.Set("X-Forwarded-Proto", "http")
+		// 修改 Origin header 以匹配上游服务
+		if origin := req.Header.Get("Origin"); origin != "" {
+			req.Header.Set("Origin", target.Scheme+"://"+target.Host)
+		}
 	}
 
 	// 保留所有 header，不删除 hop-by-hop header
