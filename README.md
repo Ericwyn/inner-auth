@@ -2,6 +2,8 @@
 
 统一的内部服务鉴权网关，支持多站点，提供认证页面和反向代理功能。
 
+![screenshot](doc/screenshot.png)
+
 ## 功能
 
 - 多站点支持，根据 Host header 自动路由
