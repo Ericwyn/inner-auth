@@ -4,16 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-const version = "0.0.1"
+const version = "0.0.2"
 
 func main() {
 	showVersion := flag.Bool("v", false, "print version")
-	showTOTP := flag.Bool("show-totp", false, "show TOTP import URI")
+	showTOTP := flag.String("show-totp", "", "show TOTP import URI for specified site name")
 	configPath := flag.String("c", "config.json", "config file path")
 	flag.Parse()
 
@@ -28,40 +27,35 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	if *showTOTP {
-		if config.Auth.TOTPToken == "" {
-			log.Fatal("totp_token is not configured")
+	if *showTOTP != "" {
+		siteConfig, ok := config.Sites[*showTOTP]
+		if !ok {
+			log.Fatalf("site %s not found", *showTOTP)
+		}
+		if siteConfig.Auth.TOTPToken == "" {
+			log.Fatalf("site %s: totp_token is not configured", *showTOTP)
 		}
 		uri := fmt.Sprintf("otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
-			config.Title, config.Auth.User, config.Auth.TOTPToken, config.Title)
+			siteConfig.Title, siteConfig.Auth.User, siteConfig.Auth.TOTPToken, siteConfig.Title)
 		fmt.Println(uri)
 		return
 	}
 
-	// 初始化组件
-	auth := NewAuthenticator(&config.Auth)
-	rateLimiter := NewRateLimiter(&config.RateLimit)
-	handler := NewHandler(config, auth, rateLimiter)
-
-	// 创建反向代理
-	proxy, err := NewReverseProxy(config.Upstream)
-	if err != nil {
-		log.Fatalf("create proxy: %v", err)
+	// 初始化所有站点
+	if err := InitSites(config); err != nil {
+		log.Fatalf("init sites: %v", err)
 	}
 
 	// 启动定时清理速率限制记录
-	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
-		defer ticker.Stop()
-		for range ticker.C {
-			rateLimiter.Cleanup()
-		}
-	}()
+	StartCleanupTicker()
 
 	// 设置 Gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
+
+	// 创建 handler
+	handler := NewHandler()
 
 	// 静态路由
 	r.GET("/inner-login", handler.ShowLogin)
@@ -69,14 +63,21 @@ func main() {
 	r.GET("/inner-logout", handler.HandleLogout)
 
 	// 其他路由需要认证
-	r.NoRoute(AuthMiddleware(config.JWTSecret), func(c *gin.Context) {
-		proxy.ServeHTTP(c.Writer, c.Request)
+	r.NoRoute(AuthMiddleware(), func(c *gin.Context) {
+		site := GetSiteByHost(c.Request.Host)
+		if site == nil {
+			c.AbortWithStatus(404)
+			return
+		}
+		site.Proxy.ServeHTTP(c.Writer, c.Request)
 	})
 
 	// 启动服务
 	addr := fmt.Sprintf(":%d", config.ListenPort)
 	log.Printf("inner-auth starting on %s", addr)
-	log.Printf("upstream: %s", config.Upstream)
+	for host, site := range sitesByHost {
+		log.Printf("site: %s -> %s", host, site.Config.Upstream)
+	}
 	if err := r.Run(addr); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
