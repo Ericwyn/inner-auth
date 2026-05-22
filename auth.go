@@ -30,14 +30,14 @@ func (a *Authenticator) Authenticate(username, password, totpCode string) error 
 		if totpCode == "" {
 			return fmt.Errorf("TOTP code is required")
 		}
-		valid, _ := totp.ValidateCustom(totpCode, a.config.TOTPToken, time.Now(), totp.ValidateOpts{
+		valid, err := totp.ValidateCustom(totpCode, a.config.TOTPToken, time.Now(), totp.ValidateOpts{
 			Period:    30,
-			Skew:      1,
+			Skew:      2,
 			Digits:    6,
 			Algorithm: 0, // SHA1
 		})
 		if !valid {
-			return fmt.Errorf("invalid TOTP code")
+			return fmt.Errorf("invalid TOTP code: %w", err)
 		}
 	}
 
